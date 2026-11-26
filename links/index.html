@@ -48,11 +48,11 @@ a { color: inherit; }
 .cartao {
   position: relative; display: grid; grid-template-columns: 1fr 42%; min-height: 150px; border-radius: 18px; overflow: hidden;
   text-decoration: none; isolation: isolate; box-shadow: 0 18px 30px -22px rgba(0,0,0,0.8);
-  opacity: 0; transform: translateY(18px); animation: sobe 0.7s var(--mola) forwards; animation-delay: calc(0.35s + var(--i) * 0.09s);
+  animation: sobe 0.7s var(--mola) backwards; animation-delay: calc(0.35s + var(--i) * 0.09s);
   transition: transform 0.25s var(--mola);
 }
 .cartao:active { transform: scale(0.98); }
-@keyframes sobe { to { opacity: 1; transform: none; } }
+@keyframes sobe { from { opacity: 0; transform: translateY(18px); } }
 .cartao-texto { padding: 18px 8px 18px 20px; display: grid; align-content: center; gap: 4px; z-index: 1; }
 .selo { justify-self: start; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; margin-bottom: 4px; }
 .cartao h2 { font-family: var(--f-titulo); font-weight: 400; font-size: 1.65rem; line-height: 1.02; margin: 0; letter-spacing: -0.01em; }
@@ -103,8 +103,8 @@ a { color: inherit; }
 
 /* linhas simples no fim */
 .linha-simples { display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 12px 18px; border-radius: 14px; text-decoration: none;
-  background: rgba(228,231,224,0.06); border: 1px solid rgba(228,231,224,0.14); opacity: 0; transform: translateY(18px);
-  animation: sobe 0.7s var(--mola) forwards; animation-delay: calc(0.35s + var(--i) * 0.09s); }
+  background: rgba(228,231,224,0.06); border: 1px solid rgba(228,231,224,0.14);
+  animation: sobe 0.7s var(--mola) backwards; animation-delay: calc(0.35s + var(--i) * 0.09s); }
 .linha-simples svg { flex: none; width: 24px; height: 24px; fill: none; stroke: var(--ouro); stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
 .linha-simples span { display: grid; line-height: 1.25; }
 .linha-simples small { color: #AEB5AA; font-size: 13px; }
