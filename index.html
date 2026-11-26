@@ -111,7 +111,7 @@
 </section>
 
 <!-- CENA 3 · PICO: A CIÊNCIA POR TRÁS DO ROSTO -->
-<section class="pico" id="metodo" data-fx-fixa data-fx-altura="6">
+<section class="pico" id="metodo">
   <div class="fx-palco">
     <div class="pico-grade">
       <div class="pico-texto">
@@ -123,29 +123,44 @@
           <li data-etapa-pico="4"><h3>Resultado natural</h3><p>Você descansada, com a sua expressão. É isso que a gente chama de resultado.</p></li>
         </ol>
       </div>
-      <div class="pico-rosto" aria-hidden="true">
-        <div class="placa placa-base"><img src="img/rosto-dra-fernanda.jpg" width="800" height="625" alt=""></div>
-        <div class="placa placa-pele"><img src="img/rosto-dra-fernanda.jpg" width="800" height="625" alt=""><span class="placa-nome">pele</span></div>
-        <div class="placa placa-musculo">
-          <img src="img/rosto-dra-fernanda.jpg" width="800" height="625" alt="">
-          <svg viewBox="0 0 800 625" class="musculos">
-            <path class="m" d="M215 105 C 270 80, 340 70, 400 85"/>
-            <path class="m" d="M220 125 C 275 100, 340 92, 400 105"/>
-            <path class="m" d="M215 182 C 230 155, 285 152, 298 178 C 285 205, 230 207, 215 182 Z"/>
-            <path class="m" d="M315 155 C 328 128, 380 126, 393 150 C 382 176, 330 180, 315 155 Z"/>
-            <path class="m" d="M232 240 C 255 255, 275 265, 292 272"/>
-            <path class="m" d="M410 205 C 395 230, 375 250, 362 262"/>
-          </svg>
-          <span class="placa-nome">músculo</span>
-          <span class="rotulo-m" style="--x:54%;--y:9%">frontal</span>
-          <span class="rotulo-m" style="--x:54%;--y:21%">orbicular dos olhos</span>
-          <span class="rotulo-m" style="--x:55%;--y:37%">zigomático</span>
+      <!-- A foto fica parada como uma lâmina no microscópio; cada camada desce sobre ela como uma
+           cortina (transform puro: a placa de vídeo anima sozinha, sem tremer no celular).
+           O "quadro" guarda as coordenadas da foto (800×625), então traços e rótulos nunca saem do lugar
+           mesmo quando o celular mostra a foto mais alta e recortada dos lados. -->
+      <div class="pico-rosto" aria-hidden="true" data-camada="0">
+        <div class="lamina-zoom">
+          <div class="placa placa-base"><div class="quadro"><img src="img/rosto-dra-fernanda.jpg" width="800" height="625" alt=""></div></div>
+          <div class="placa placa-pele"><div class="cortina"><div class="cortina-dentro">
+            <div class="quadro"><img src="img/rosto-pele.jpg" width="800" height="625" alt="" decoding="async"></div>
+          </div></div></div>
+          <div class="placa placa-musculo"><div class="cortina"><div class="cortina-dentro">
+            <div class="quadro">
+              <img src="img/rosto-musculo.jpg" decoding="async" width="800" height="625" alt="">
+              <svg viewBox="0 0 800 625" class="musculos">
+                <path class="m" d="M215 105 C 270 80, 340 70, 400 85"/>
+                <path class="m" d="M220 125 C 275 100, 340 92, 400 105"/>
+                <path class="m" d="M215 182 C 230 155, 285 152, 298 178 C 285 205, 230 207, 215 182 Z"/>
+                <path class="m" d="M315 155 C 328 128, 380 126, 393 150 C 382 176, 330 180, 315 155 Z"/>
+                <path class="m" d="M232 240 C 255 255, 275 265, 292 272"/>
+                <path class="m" d="M410 205 C 395 230, 375 250, 362 262"/>
+              </svg>
+              <span class="rotulo-m" style="--x:54%;--y:9%">frontal</span>
+              <span class="rotulo-m" style="--x:54%;--y:21%">orbicular dos olhos</span>
+              <span class="rotulo-m" style="--x:55%;--y:37%">zigomático</span>
+            </div>
+          </div></div></div>
+          <div class="placa placa-colageno"><div class="cortina"><div class="cortina-dentro">
+            <div class="quadro">
+              <img src="img/rosto-colageno.jpg" width="1200" height="938" alt="" decoding="async">
+            </div>
+          </div></div></div>
         </div>
-        <div class="placa placa-colageno">
-          <img src="img/rosto-dra-fernanda.jpg" width="800" height="625" alt="">
-          <svg viewBox="0 0 800 625" class="fibras" preserveAspectRatio="xMidYMid slice"><g></g></svg>
-          <span class="placa-nome">colágeno</span>
-        </div>
+        <!-- régua de aumento do microscópio: acende a camada que está na lâmina -->
+        <ol class="aumentos">
+          <li data-c="1"><b>10x</b> pele</li>
+          <li data-c="2"><b>20x</b> músculo</li>
+          <li data-c="3"><b>40x</b> colágeno</li>
+        </ol>
       </div>
     </div>
     <p class="pico-frase">Avaliamos sua anatomia, entendemos suas expectativas e construímos um plano que faz sentido para você.</p>
@@ -369,28 +384,69 @@
     <h2 data-fx="subir">Dois sócios e uma clínica no centro de Araras</h2>
     <p data-fx="subir" data-fx-atraso="120">A Dra. Fernanda Flores e o Dr. Fernando Bomfim atendem na Rua Visconde do Rio Branco, com entrada, estacionamento e banheiro acessíveis. Mulheres e homens, com parcerias para protocolos específicos.</p>
   </div>
-  <div class="mural" aria-label="Fotos da clínica">
-    <figure class="polaroide p1" data-cursor="Ver foto" tabindex="0">
-      <span class="fita" aria-hidden="true"></span>
-      <img src="img/socios.jpg" width="1024" height="530" alt="Dra. Fernanda Flores e Dr. Fernando Bomfim em ensaio de estúdio" loading="lazy">
-      <figcaption>Dra. Fernanda e Dr. Fernando</figcaption>
-    </figure>
-    <figure class="polaroide p2" data-cursor="Ver foto" tabindex="0">
-      <span class="fita" aria-hidden="true"></span>
-      <img src="img/socios-cafe.jpg" width="1024" height="608" alt="Dra. Fernanda e Dr. Fernando brindando com xícaras de café" loading="lazy">
-      <figcaption>um café entre sócios</figcaption>
-    </figure>
-    <figure class="polaroide p3" data-cursor="Ver foto" tabindex="0">
-      <span class="fita" aria-hidden="true"></span>
-      <img src="img/procedimento-facial.jpg" width="900" height="917" alt="Atendimento na clínica, com a profissional aplicando o procedimento" loading="lazy">
-      <figcaption>atendimento na FF</figcaption>
-    </figure>
-    <a class="polaroide p4 vazia" href="#agendar" data-cursor="Agendar">
-      <span class="fita" aria-hidden="true"></span>
-      <span class="vazia-quadro"><span>a próxima foto<br>pode ser a sua</span></span>
-      <span class="vazia-legenda">sua avaliação</span>
-    </a>
-  </div>
+  <!-- gaveta de fichas: cada ficha sobe e para em cima da anterior, deixando a aba de cima à mostra,
+       como as pastas de um arquivo de clínica. A última é a ficha de quem está vendo o site. -->
+  <ol class="gaveta" aria-label="Fichas da clínica">
+    <li class="ficha" style="--i:0">
+      <span class="ficha-aba">Os sócios</span>
+      <div class="ficha-corpo">
+        <img class="ficha-foto" src="img/socios-cafe.jpg" width="1024" height="608" alt="Dra. Fernanda Flores e Dr. Fernando Bomfim brindando com xícaras de café" loading="lazy">
+        <dl class="ficha-campos">
+          <div><dt>Nomes</dt><dd>Fernanda Flores e Fernando Bomfim</dd></div>
+          <div><dt>Juntos na FF</dt><dd>há 5 anos</dd></div>
+          <div><dt>Onde</dt><dd>no centro de Araras</dd></div>
+        </dl>
+      </div>
+    </li>
+    <li class="ficha" style="--i:1">
+      <span class="ficha-aba">Dra. Fernanda Flores</span>
+      <div class="ficha-corpo">
+        <img class="ficha-foto" src="img/dra-fernanda-estudio.jpg" width="380" height="530" alt="Dra. Fernanda Flores sorrindo, de jaleco preto com o nome bordado" loading="lazy" style="object-position: 50% 22%">
+        <dl class="ficha-campos">
+          <div><dt>Formação</dt><dd>farmacêutica, doutora pela UNESP</dd></div>
+          <div><dt>Também é</dt><dd>professora universitária</dd></div>
+          <div><dt>WhatsApp</dt><dd><a href="https://wa.me/5519992626842" data-cursor="Conversar">(19) 99262-6842</a></dd></div>
+        </dl>
+      </div>
+    </li>
+    <li class="ficha" style="--i:2">
+      <span class="ficha-aba">Dr. Fernando Bomfim</span>
+      <div class="ficha-corpo">
+        <img class="ficha-foto" src="img/dr-fernando-clinica.jpg" width="520" height="470" alt="Dr. Fernando Bomfim no consultório da FF, de uniforme com o logo da clínica" loading="lazy" style="object-position: 50% 20%">
+        <dl class="ficha-campos">
+          <div><dt>Na FF</dt><dd>sócio da Dra. Fernanda</dd></div>
+          <div><dt>Atende</dt><dd>mulheres e homens</dd></div>
+          <div><dt>WhatsApp</dt><dd><a href="https://wa.me/5519991779732" data-cursor="Conversar">(19) 99177-9732</a></dd></div>
+        </dl>
+      </div>
+    </li>
+    <li class="ficha" style="--i:3">
+      <span class="ficha-aba">A clínica</span>
+      <div class="ficha-corpo">
+        <img class="ficha-foto" src="img/procedimento-facial.jpg" width="900" height="917" alt="Atendimento na clínica, com a profissional aplicando o procedimento" loading="lazy" style="object-position: 50% 30%">
+        <dl class="ficha-campos">
+          <div><dt>Endereço</dt><dd>Rua Visconde do Rio Branco, 340, Centro, Araras</dd></div>
+          <div><dt>Acessível</dt><dd>entrada, estacionamento e banheiro</dd></div>
+          <div><dt>Parcerias</dt><dd>para protocolos específicos</dd></div>
+        </dl>
+      </div>
+    </li>
+    <!-- a ficha de quem está vendo o site (como a cadeira "a sua vaga") -->
+    <li class="ficha ficha-sua" style="--i:4">
+      <span class="ficha-aba">Você</span>
+      <div class="ficha-corpo">
+        <a class="ficha-foto ficha-foto-vazia" href="#agendar" data-cursor="Agendar">
+          <span>a próxima foto<br>pode ser a sua</span>
+        </a>
+        <dl class="ficha-campos">
+          <div><dt>Nome</dt><dd class="a-preencher"><span class="escrita">você</span></dd></div>
+          <div><dt>O que te incomoda</dt><dd class="a-preencher" aria-label="a preencher na avaliação"></dd></div>
+          <div><dt>Primeiro passo</dt><dd>uma avaliação com a Dra. Fernanda</dd></div>
+        </dl>
+        <a class="botao ficha-botao" href="#agendar" data-cursor="Agendar">Agendar minha avaliação</a>
+      </div>
+    </li>
+  </ol>
 </section>
 
 <!-- CENA 6B · FF EDUCAÇÃO -->

@@ -156,17 +156,24 @@
         }, 260);
       }
     }, { passive: true });
-    document.addEventListener("touchmove", function (e) {
+    // touchmove: no resto da página é "passivo" (a rolagem nunca espera o código);
+    // só na foto da lupa ele pode segurar a rolagem, e só enquanto a lupa está aberta.
+    // (antes ficava bloqueante no documento inteiro e fazia a cena do rosto tremer no celular)
+    function moverToque(e) {
       if (!toque) return;
       var t = e.touches[0];
       if (toque.lenteAberta) {
-        e.preventDefault(); // enquanto a lupa está aberta, o dedo explora a foto em vez de rolar
+        if (e.cancelable) e.preventDefault(); // enquanto a lupa está aberta, o dedo explora a foto em vez de rolar
         toque.x = t.clientX; toque.y = t.clientY;
         posicionarToque(toque.x, toque.y);
       } else {
         if (Math.hypot(t.clientX - toque.x, t.clientY - toque.y) > 10) { toque.moveu = true; clearTimeout(toque.timer); }
       }
-    }, { passive: false });
+    }
+    document.addEventListener("touchmove", function (e) { if (!toque || !toque.alvo) moverToque(e); }, { passive: true });
+    document.querySelectorAll("[data-lente]").forEach(function (el) {
+      el.addEventListener("touchmove", moverToque, { passive: false });
+    });
     document.addEventListener("touchend", function () {
       if (toque && !toque.lenteAberta && !toque.moveu && Date.now() - toque.inicio < 260) anelDeFoco(toque.x, toque.y);
       cancelarToque();
@@ -196,59 +203,62 @@
   var pico = document.querySelector(".pico");
   var placas = pico ? [].slice.call(pico.querySelectorAll(".placa")) : [];
   var etapas = pico ? [].slice.call(pico.querySelectorAll("[data-etapa-pico]")) : [];
-  var placaMusculo = pico && pico.querySelector(".placa-musculo");
-  var rotulos = pico ? [].slice.call(pico.querySelectorAll(".rotulo-m")) : [];
-  var fibras = pico && pico.querySelector(".fibras g");
+  // (as fibras de colágeno agora já vêm desenhadas na imagem img/rosto-colageno.jpg)
 
-  if (fibras) {
-    var d = "";
-    for (var f = 0; f < 46; f++) {
-      var y0 = 20 + f * 15, amp = 6 + (f % 5) * 2, fase = (f * 37) % 100;
-      d += "M-20 " + y0;
-      for (var x = 0; x <= 840; x += 60) d += " Q " + (x + 30) + " " + (y0 + (((x + fase) / 60) % 2 ? amp : -amp)) + " " + (x + 60) + " " + y0;
-      d += " ";
-    }
-    var caminho = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    caminho.setAttribute("d", d);
-    caminho.setAttribute("transform", "rotate(-18 400 350)");
-    fibras.appendChild(caminho);
+  // prepara (decodifica) as 4 imagens do rosto antes de a pessoa chegar na cena, para nenhuma
+  // camada precisar ser aberta pela primeira vez no meio da rolagem
+  if (pico && "IntersectionObserver" in window) {
+    var obsPreparo = new IntersectionObserver(function (en) {
+      if (!en[0].isIntersecting) return;
+      obsPreparo.disconnect();
+      pico.querySelectorAll(".pico-rosto img").forEach(function (im) { if (im.decode) im.decode().catch(function () {}); });
+    }, { rootMargin: "150% 0px 150% 0px" });
+    obsPreparo.observe(pico);
+  }
+
+  // A rolagem só decide QUAL camada está na lâmina; a troca é uma transição de tempo do CSS
+  // (cortina com transform), igual no computador e no celular. Nada se mexe pixel a pixel com a
+  // rolagem, então não disputa o processador com ela e não treme.
+  //   camada 0: rosto natural · 1 pele (10x) · 2 músculo (20x) · 3 colágeno (40x) · 4 recomposto
+  var rostoPico = pico && pico.querySelector(".pico-rosto");
+  var ultimaCamada = -1, ultimaEtapa = -1, ultimaFrase = -1;
+  var timersAndando = [];
+
+  function progressoPico() {
+    var ret = pico.getBoundingClientRect();
+    var percurso = pico.offsetHeight - window.innerHeight;
+    return percurso > 0 ? Math.min(1, Math.max(0, -ret.top / percurso)) : 0;
   }
 
   function atualizarPico() {
-    if (!pico) return;
-    var p = parseFloat(getComputedStyle(pico).getPropertyValue("--progresso")) || 0;
+    if (!pico || !rostoPico) return;
+    var p = progressoPico();
+    var camada = p < 0.1 ? 0 : p < 0.28 ? 1 : p < 0.46 ? 2 : p < 0.62 ? 3 : 4;
     // etapa 1 (avaliar) acompanha as três camadas; as outras vêm enquanto o rosto se recompõe
-    var etapa = p < 0.6 ? 1 : p < 0.72 ? 2 : p < 0.85 ? 3 : 4;
-    etapas.forEach(function (li) { li.classList.toggle("ativa", +li.dataset.etapaPico === etapa); });
+    var etapa = camada < 4 ? 1 : p < 0.74 ? 2 : p < 0.86 ? 3 : 4;
+    var frase = p >= 0.86 ? 1 : 0;
 
-    var abre = suave(faixa(p, 0.03, 0.17)), fecha = suave(faixa(p, 0.6, 0.8));
-    var e = abre * (1 - fecha);
-    var estreito = window.innerWidth < 900;
-    var simples = estreito || !window.matchMedia("(hover: hover)").matches;
-    var passo = estreito ? 10 : 15; // % da largura entre placas
-    var meio = (placas.length - 1) / 2;
-    // qual camada está "na lâmina" agora: 1 pele, 2 músculo, 3 colágeno
-    var foco = p < 0.18 ? 0 : p < 0.32 ? 1 : p < 0.47 ? 2 : p < 0.6 ? 3 : 0;
+    if (etapa !== ultimaEtapa) {
+      ultimaEtapa = etapa;
+      etapas.forEach(function (li) { li.classList.toggle("ativa", +li.dataset.etapaPico === etapa); });
+    }
+    if (frase !== ultimaFrase) { ultimaFrase = frase; pico.style.setProperty("--frase", String(frase)); }
+    if (camada === ultimaCamada) return; // nada mudou: zero trabalho durante a rolagem
+    ultimaCamada = camada;
+
+    rostoPico.setAttribute("data-camada", String(camada === 4 ? 0 : camada));
     placas.forEach(function (placa, k) {
-      var naFrente = foco === k && e > 0.5;
-      var tx = ((k - meio) * passo - 5) * e, tz = (naFrente ? 120 : -Math.abs(k - meio) * 40) * e;
-      var ry = (naFrente ? -6 : -22) * e, s = 1 - (naFrente ? 0.16 : 0.3) * e;
-      if (simples) {
-        // celular: só 2D e sem transição em cima da rolagem (as duas brigando faziam a imagem tremer)
-        // posição e tamanho mudam de forma contínua com a rolagem (sem saltos quando a camada da frente troca)
-        placa.style.transform = "translate3d(" + (((k - meio) * passo - 5) * e).toFixed(2) + "%,0,0) scale(" + (1 - 0.2 * e).toFixed(3) + ")";
-        placa.style.transition = "opacity .3s";
-      } else {
-        placa.style.transform = "translateX(" + tx.toFixed(2) + "%) translateZ(" + tz.toFixed(1) + "px) rotateY(" + ry.toFixed(2) + "deg) scale(" + s.toFixed(3) + ")";
-        placa.style.transition = "transform .55s cubic-bezier(.22,1,.36,1), opacity .4s";
-      }
-      placa.style.zIndex = String(naFrente ? 10 : k + 1);
-      var visivel = k === 0 ? 1 : suave(faixa(e, 0.2, 0.6));
-      placa.style.opacity = (foco && !naFrente && e > 0.5 ? visivel * 0.55 : visivel).toFixed(3);
+      if (k === 0) return; // a base (foto natural) fica sempre por baixo
+      var mostrada = camada >= k && camada <= 3;
+      var saiu = camada === 4;
+      if (placa.classList.contains("mostrada") === mostrada && placa.classList.contains("saiu") === saiu) return;
+      placa.classList.toggle("mostrada", mostrada);
+      placa.classList.toggle("saiu", saiu);
+      // a linha âmbar de leitura aparece só enquanto a cortina anda
+      placa.classList.add("andando");
+      clearTimeout(timersAndando[k]);
+      timersAndando[k] = setTimeout(function () { placa.classList.remove("andando"); }, 1000);
     });
-    if (placaMusculo) placaMusculo.style.setProperty("--desenho", suave(faixa(p, 0.32, 0.43)).toFixed(3));
-    rotulos.forEach(function (r) { r.style.opacity = String(foco === 2 ? faixa(p, 0.36, 0.41) : 0); });
-    pico.style.setProperty("--frase", faixa(p, 0.86, 0.95).toFixed(3));
   }
   if (pico && !reduzido) {
     var pendente = false;
@@ -364,14 +374,14 @@
      4c. SÓCIOS: a foto se abre em duas metades e o texto aparece no meio;
          FF EDUCAÇÃO: as cadeiras da turma se ocupam e a foto inclina com o ponteiro
      ========================================================= */
-  // sócios: as polaroides saem empilhadas e se espalham na mesa quando a seção aparece
-  var mural = document.querySelector(".mural");
-  if (mural) {
-    if (reduzido || !("IntersectionObserver" in window)) mural.classList.add("na-mesa");
-    else {
-      var obsMural = new IntersectionObserver(function (en) { if (en[0].isIntersecting) { mural.classList.add("na-mesa"); obsMural.disconnect(); } }, { threshold: 0.3 });
-      obsMural.observe(mural);
-    }
+  // sócios: as fichas se empilham só com CSS (sticky). Quando a ficha de quem está vendo chega,
+  // o nome "você" é escrito à mão e o campo da queixa fica esperando, com o cursor piscando.
+  var fichaSua = document.querySelector(".ficha-sua");
+  if (fichaSua && !reduzido && "IntersectionObserver" in window) {
+    var obsFicha = new IntersectionObserver(function (en) {
+      if (en[0].isIntersecting) { fichaSua.classList.add("escrevendo"); obsFicha.disconnect(); }
+    }, { threshold: 0.6 });
+    obsFicha.observe(fichaSua);
   }
   var vagas = document.querySelector(".vagas");
   if (vagas) {
@@ -537,9 +547,12 @@
   var flutuante = document.querySelector(".flutuante");
   var capa = document.querySelector(".capa"), fecho = document.querySelector(".fecho");
   if ("IntersectionObserver" in window) {
-    var capaVisivel = true, fechoVisivel = false;
-    var atualizar = function () { flutuante.classList.toggle("visivel", !capaVisivel && !fechoVisivel); };
+    var capaVisivel = true, fechoVisivel = false, picoNoMeio = false;
+    var celular = window.matchMedia("(max-width: 900px)");
+    // no celular, o botão também sai durante a cena do rosto, para não cobrir o texto da etapa
+    var atualizar = function () { flutuante.classList.toggle("visivel", !capaVisivel && !fechoVisivel && !(picoNoMeio && celular.matches)); };
     new IntersectionObserver(function (en) { capaVisivel = en[0].isIntersecting; atualizar(); }, { threshold: 0.15 }).observe(capa);
     new IntersectionObserver(function (en) { fechoVisivel = en[0].isIntersecting; atualizar(); }, { threshold: 0.1 }).observe(fecho);
+    if (pico) new IntersectionObserver(function (en) { picoNoMeio = en[0].isIntersecting; atualizar(); }, { rootMargin: "-50% 0px -50% 0px" }).observe(pico);
   } else flutuante.classList.add("visivel");
 })();
